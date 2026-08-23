@@ -82,5 +82,11 @@ harness is graded against them and never the reverse. Do not edit a label to mak
 ## Output hygiene
 
 The structured `--out` artifact and any `--curated-transcript` are meant to be **committed**
-(small, diffable). Full verbose per-run logs are noise and stay out of git. Do **not** commit
+(small, diffable) — that is the *maintainer* workflow, when we are deliberately updating the
+evidence base. Full verbose per-run logs are noise and stay out of git. Do **not** commit
 raw `*.out.txt` transcripts — `scripts/audit/` remains the gitignored home for those.
+
+**A reader reproducing the benchmark is not in that workflow.** `REPRODUCE.md` points them
+at `--out scripts/measure/repro/sweep_repro.jsonl` (gitignored), never into
+`scripts/measure/results/`, so a reproduction compares against the committed baseline
+instead of overwriting it and leaves `git status` clean.

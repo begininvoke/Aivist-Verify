@@ -93,11 +93,17 @@ degraded · 300 → 0 · 130 → 130 · 79 refused.** Point `CANONICAL` at
 It needs the reader's **own `GEMINI_API_KEY`** (environment or `backend/.env`).
 
 ```bash
-# the full high-N zero-FP pass — SAFE/control N=20, VULN N=10, both targets
+# the full high-N zero-FP pass — SAFE/control N=20, VULN N=10, both targets.
+# NOTE the --out path: your sweep goes to scripts/measure/repro/, NOT into
+# scripts/measure/results/. That directory holds our committed artifacts and the
+# documented procedure never writes into it — you are here to COMPARE against the
+# baseline, not to replace it. scripts/measure/repro/ is gitignored, so a full
+# reproduction leaves `git status` clean.
+mkdir -p scripts/measure/repro
 python scripts/measure/verdict_measure.py \
     --caseset scripts/measure/casesets/vulnerable_target.json \
     --caseset scripts/measure/casesets/depot.json \
-    --n-safe 20 --n-vuln 10 --out scripts/measure/results/sweep_highN.jsonl
+    --n-safe 20 --n-vuln 10 --out scripts/measure/repro/sweep_repro.jsonl
 ```
 
 **Run count vs. call count — budget for the second one.** The full pass is **430 runs**
@@ -121,6 +127,91 @@ up to two more attempts per call on top (`max_attempts=3`, 503-only retry).
 The tool prints the planned run count *and* the derived call range before it starts, and
 flags any degraded/truncated run as **NOT DATA** (excluded from the claim) rather than
 silently reporting a smaller N.
+
+### Compare your sweep against ours
+
+**Your gated-down count will probably not be 79, and that is not a failure.** That number
+counts how often the *model's raw opinion* asked to confirm a secure endpoint. The proposer
+is sampled at `temperature=0.4` with no seed, so its error rate is stochastic: our own two
+committed passes, same 28 cases and same N, produced **79** and **77**. Expect a number in
+that neighbourhood, not that number.
+
+**What must not differ is the invariant.** Whatever the proposer does, every SAFE/control run
+must still end at a final verdict that is not `verified`, every VULN run must still reach
+`verified`, and nothing may degrade. That is the claim being reproduced — *the gate is not
+moved by the model* — and it is what this comparison checks:
+
+```bash
+python - scripts/measure/results/sweep_highN.jsonl scripts/measure/repro/sweep_repro.jsonl <<'PY'
+import json, sys, collections
+
+CANONICAL, REPRODUCTION = sys.argv[1], sys.argv[2]
+
+def summarise(path):
+    rows = [json.loads(l) for l in open(path, encoding="utf-8") if l.strip()]
+    safe = [r for r in rows if r["ground_truth"] in ("SECURE", "CONTROL")]
+    real = [r for r in rows if r["ground_truth"] == "REAL"]
+    refused = [r for r in rows
+               if r["ai_verdict_raw"] == "verified" and r["final_verdict"] != "verified"]
+    return {
+        "usable runs":              len(rows),
+        "degraded":                 sum(1 for r in rows if r["degraded"]),
+        "SAFE/control runs":        len(safe),
+        "  -> final 'verified'":    sum(1 for r in safe if r["final_verdict"] == "verified"),
+        "VULN runs":                len(real),
+        "  -> final 'verified' ":   sum(1 for r in real if r["final_verdict"] == "verified"),
+        "gated down (raw yes, final no)": len(refused),
+    }, collections.Counter(r["guard_override"] for r in refused)
+
+a, ca = summarise(CANONICAL)
+b, cb = summarise(REPRODUCTION)
+
+INVARIANT = {"usable runs", "degraded", "SAFE/control runs", "  -> final 'verified'",
+             "VULN runs", "  -> final 'verified' "}
+
+print(f"{'':34}{'canonical':>12}{'yours':>12}   ")
+print("-" * 72)
+for k in a:
+    flag = ""
+    if a[k] != b[k]:
+        flag = "  <-- MUST NOT DIFFER" if k in INVARIANT else "  <-- expected to vary"
+    print(f"{k:34}{a[k]:>12}{b[k]:>12}{flag}")
+print("-" * 72)
+print("gated-down by channel:")
+for ch in sorted(set(ca) | set(cb)):
+    print(f"  {str(ch):44}{ca.get(ch,0):>8}{cb.get(ch,0):>8}")
+print()
+bad = [k for k in INVARIANT if a[k] != b[k]]
+print("INVARIANT HELD" if not bad else f"INVARIANT BROKEN on: {bad}")
+PY
+```
+
+Here is that comparison run against **our own two committed passes** — `sweep_highN.jsonl`
+as canonical and `sweep_highN_d19.jsonl` standing in for a reproduction. It is exactly the
+shape your output should have:
+
+```
+                                     canonical       yours
+------------------------------------------------------------------------
+usable runs                                430         430
+degraded                                     0           0
+SAFE/control runs                          300         300
+  -> final 'verified'                        0           0
+VULN runs                                  130         130
+  -> final 'verified'                      130         130
+gated down (raw yes, final no)              79          77  <-- expected to vary
+------------------------------------------------------------------------
+gated-down by channel:
+  cross_resource_readback_not_decisive              38      37
+  owner_view_not_corroborated                       41      40
+
+INVARIANT HELD
+```
+
+Two independent passes, two different proposer error rates, one identical invariant. If your
+run prints `INVARIANT HELD`, you have reproduced the claim. If it prints `INVARIANT BROKEN`,
+that is a real finding and we want to hear about it — open an issue with your
+`sweep_repro.jsonl` attached.
 
 Runtime flags (`AI_DEEP_VERIFY_ENABLED`, `AI_DEEP_VERIFY_OWNER_AUTH`) are set in-process by
 the tool; the committed config defaults stay off/unset.

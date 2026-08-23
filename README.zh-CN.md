@@ -244,7 +244,10 @@ python -m pytest depot_target/test_vulns.py -q           # 23 tests
 python scripts/measure/verdict_measure.py \
   --caseset scripts/measure/casesets/vulnerable_target.json \
   --caseset scripts/measure/casesets/depot.json \
-  --n-safe 20 --n-vuln 10 --out scripts/measure/results/sweep_highN.jsonl
+  --n-safe 20 --n-vuln 10 --out scripts/measure/repro/sweep_repro.jsonl
+# 你的测量结果写入 scripts/measure/repro/（已 gitignore），绝不写入 results/ ——
+# 你是在与我们已提交的基准做对照，而不是替换它。REPRODUCE.md 中的并排对比
+# 会告诉你哪些数字允许变化、哪些不允许。
 ```
 
 完整方法以及每条通道已记录在案的**边界**：[`REPRODUCE.md`](./REPRODUCE.md) 与 [`RESULTS.md`](./RESULTS.md)。

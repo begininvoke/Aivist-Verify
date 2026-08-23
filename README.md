@@ -275,7 +275,10 @@ python -m pytest depot_target/test_vulns.py -q           # 23 tests
 python scripts/measure/verdict_measure.py \
   --caseset scripts/measure/casesets/vulnerable_target.json \
   --caseset scripts/measure/casesets/depot.json \
-  --n-safe 20 --n-vuln 10 --out scripts/measure/results/sweep_highN.jsonl
+  --n-safe 20 --n-vuln 10 --out scripts/measure/repro/sweep_repro.jsonl
+# Your sweep goes to scripts/measure/repro/ (gitignored), never into results/ —
+# you are comparing against our committed baseline, not replacing it. REPRODUCE.md
+# has a side-by-side that tells you which numbers may vary and which may not.
 ```
 
 Full method and the documented **bounds** of each channel: [`REPRODUCE.md`](./REPRODUCE.md) and [`RESULTS.md`](./RESULTS.md).
