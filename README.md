@@ -108,7 +108,7 @@ And when the attacker gains nothing, the tool says so: a run with no cross-user 
 
 Five confirmation shapes — cross-user write, read-type semantic equivalence, silent-write / object-state, delete / negative-assertion, and mass-assignment / low-entropy state-jump — run against **two structurally different, self-contained vulnerable labs** (integer ids and UUID ids), driven by a **real** `gemini-2.5-pro` loop, freshly seeded every run:
 
-| | Result |
+| Source: `scripts/measure/results/sweep_highN.jsonl` | Result |
 |---|---|
 | SECURE / control runs → final `verified` | **300 → 0** — zero false positives |
 | Real-vulnerability runs → final `verified` | **130 → 130** — every planted flaw caught, via its expected channel |
@@ -117,7 +117,9 @@ Five confirmation shapes — cross-user write, read-type semantic equivalence, s
 
 Read that last row again: on **79** separate runs the AI wanted to confirm a vulnerability that wasn't there, and the code gate stopped all 79 from ever reaching a `verified`. That is the moat, measured.
 
-**This is a controlled benchmark on two labs — not a tally of real-world kills.** Clean real-world confirmations are genuinely rare, and this project's honest headline is *discriminative power plus a zero-false-positive discipline*, not a screen full of `CONFIRMED`. Every number above is recomputed from the committed artifact `scripts/measure/results/sweep_highN.jsonl` — see [`RESULTS.md`](./RESULTS.md).
+**This is a controlled benchmark on two labs — not a tally of real-world kills.** Clean real-world confirmations are genuinely rare, and this project's honest headline is *discriminative power plus a zero-false-positive discipline*, not a screen full of `CONFIRMED`. Every number above is recomputed from the committed artifact `scripts/measure/results/sweep_highN.jsonl` — the canonical one — see [`RESULTS.md`](./RESULTS.md).
+
+A second 430-row artifact, `sweep_highN_d19.jsonl`, is committed as the acceptance record for the D19 promotion layer. It is a *separate measured pass*, and counted the same way its last row is **77**, not 79 — the model's raw opinion on borderline SAFE cases is sampled with no seed and varies between passes. Both passes agree on the claim itself: 300 → 0 and 130 → 130. [`REPRODUCE.md`](./REPRODUCE.md) shows the per-case difference and gives you the command to check either.
 
 ## Validated on real, public targets — not just our own labs
 

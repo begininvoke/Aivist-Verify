@@ -30,6 +30,13 @@
 > **raw-said `verified` on 79 runs** and code held the line on every one. *Supersedes the single-target
 > 140/70 record (kept as history in `RESULTS.md`).* The per-shape `5/5` figures below are original runs.
 >
+> **Two 430-row artifacts are committed; they are not interchangeable.**
+> `sweep_highN.jsonl` is **canonical** for every headline figure above (including the 79).
+> `sweep_highN_d19.jsonl` (cited just above for D19) is a **separate measured pass** kept as the
+> D19 acceptance record; counted the same way it yields **77**, not 79. Both agree on
+> 300 → 0 and 130 → 130; only the model's raw opinion on borderline SAFE cases differs
+> between passes (`temperature=0.4`, no seed). See `REPRODUCE.md`.
+>
 > ✅ **All five shapes are code-gated (D24 RESOLVED, `033fc9e`).** This previously read that
 > read-semantic was **NOT** gated: when the model answers from the attack response alone it requests
 > no follow-up, so the B-2.2 guard is a structural no-op and all four exemption channels are

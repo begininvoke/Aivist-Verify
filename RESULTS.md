@@ -21,13 +21,26 @@
 
 ## Headline
 
-| Metric | Result |
+Every figure in this table is recomputed from the canonical artifact
+[`scripts/measure/results/sweep_highN.jsonl`](scripts/measure/results/sweep_highN.jsonl) —
+430 rows, one per measured run.
+
+| Metric (source: `sweep_highN.jsonl`) | Result |
 |---|---|
 | SAFE / control runs → final `verified` | **300 → 0** — zero false positives |
 | VULN runs → final `verified` | **130 → 130** — every real vuln caught, via its expected channel |
 | Usable runs | **430 / 430**, zero degraded |
 | Model raw-said `verified` on a SAFE/control run, refused by the code gate | **79 / 79** |
 | Per-row regression check vs. the caseset baseline | 430 / 430 OK |
+
+> **There is a second 430-row artifact, and it gives a different last row.**
+> `scripts/measure/results/sweep_highN_d19.jsonl` is a separate measured pass kept as the
+> acceptance record for the **D19 promotion layer**; counted the same way it yields **77**,
+> not 79. Both passes agree exactly on what is being claimed — **300 → 0**, **130 → 130**,
+> zero degraded — and differ only in how often the model's *raw* opinion happened to say
+> `verified` on a borderline SAFE case, which is sampled at `temperature=0.4` with no seed
+> and genuinely varies. Cite **79 only against `sweep_highN.jsonl`**. See
+> [`REPRODUCE.md`](REPRODUCE.md) for the per-case difference.
 
 The **79** is the point of the whole exercise: on secure controls the model's *raw* output asked for
 `verified` 79 times, and the deterministic gate refused **every one** — 0 of the 300 SAFE/control runs

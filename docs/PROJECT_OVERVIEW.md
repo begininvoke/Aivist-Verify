@@ -143,7 +143,7 @@ confirmation shapes across both labs with a real `gemini-2.5-pro` loop, freshly 
 every run, and writes one structured JSON row per run. From the committed artifact
 `scripts/measure/results/sweep_highN.jsonl` (N=20 SAFE/control and N=10 VULN per case):
 
-| | Result |
+| Source: `sweep_highN.jsonl` (canonical) | Result |
 |---|---|
 | SAFE / control runs → final `verified` | **300 → 0** (zero false positives) |
 | VULN runs → final `verified` | **130 → 130** (every real vuln caught, via its expected channel) |

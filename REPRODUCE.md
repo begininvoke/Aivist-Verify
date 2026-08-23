@@ -26,20 +26,65 @@ result, owner-view similarity (read-semantic cases), and a per-row regression ch
 the caseset's known-good baseline. Small and diffable, so a reviewer can read the evidence
 directly:
 
-- `sweep_n1.jsonl` — the N=1 regression baseline across all 28 cases on both targets.
-- `sweep_highN.jsonl` — the high-N zero-FP record (SAFE/control N=20, VULN N=10).
+- **`sweep_highN.jsonl` — CANONICAL.** The high-N zero-FP record (SAFE/control N=20, VULN
+  N=10), 430 rows. **Every headline figure in this repo comes from this file.** If a number
+  in `README.md` or `RESULTS.md` disagrees with what you compute, compute it against *this*
+  file before concluding anything.
+- `sweep_n1.jsonl` — the N=1 regression baseline across all 28 cases on both targets, 28 rows.
+- `sweep_highN_d19.jsonl` — a **second, separate 430-row pass**, kept as the acceptance
+  artifact for the **D19 promotion layer** (it adds the `owner_view_corroborated`,
+  `promotion_channel` and `would_promote` columns that the D19 choke point is checked
+  against). It is **not** an alternative source for the headline.
+
+> **The two 430-row files do not yield the same headline number, and we would rather tell
+> you than have you find it.** Counting rows where the model's raw verdict was `verified`
+> but the final verdict was not: **`sweep_highN.jsonl` gives 79; `sweep_highN_d19.jsonl`
+> gives 77.** They are two different measured passes, not two views of one pass. The model
+> is sampled at `temperature=0.4` with no seed, so on borderline SAFE cases its raw verdict
+> genuinely varies run to run — `X-EQUIV-SAFE` raw-said `verified` once in the canonical
+> pass and zero times in the D19 pass; `X-MASS-SAFE-PRESENT` 19 times vs 17.
+>
+> What does **not** vary is the thing being claimed. In **both** files: SAFE/control runs
+> reaching a final `verified` = **0**, VULN runs reaching `verified` = **130 / 130**,
+> degraded rows = **0**. The headline "79" is a property of one measured pass; the zero is a
+> property of the gate. Quote 79 only alongside `sweep_highN.jsonl`.
 
 Inspect with any JSON tool, e.g.:
 
 ```bash
 python - <<'PY'
 import json, collections
-rows=[json.loads(l) for l in open("scripts/measure/results/sweep_highN.jsonl")]
-by=collections.defaultdict(collections.Counter)
-for r in rows: by[r["case_id"]][f'{r["ai_verdict_raw"]}->{r["final_verdict"]}']+=1
-for cid,dist in by.items(): print(cid, dict(dist))
+
+# CANONICAL artifact. Every headline figure below comes from this exact path.
+CANONICAL = "scripts/measure/results/sweep_highN.jsonl"
+rows = [json.loads(l) for l in open(CANONICAL, encoding="utf-8") if l.strip()]
+
+safe   = [r for r in rows if r["ground_truth"] in ("SECURE", "CONTROL")]
+real   = [r for r in rows if r["ground_truth"] == "REAL"]
+refused = [r for r in rows
+           if r["ai_verdict_raw"] == "verified" and r["final_verdict"] != "verified"]
+
+print("artifact                              :", CANONICAL)
+print("usable runs                           :", len(rows), "  degraded:", sum(1 for r in rows if r["degraded"]))
+print("SAFE/control runs -> final 'verified' :", len(safe), "->",
+      sum(1 for r in safe if r["final_verdict"] == "verified"))
+print("VULN runs         -> final 'verified' :", len(real), "->",
+      sum(1 for r in real if r["final_verdict"] == "verified"))
+print("model raw-said 'verified', gate refused:", len(refused))
+print("  by channel:", dict(collections.Counter(r["guard_override"] for r in refused)))
+
+# per-case raw -> final, as before
+by = collections.defaultdict(collections.Counter)
+for r in rows:
+    by[r["case_id"]][f'{r["ai_verdict_raw"]}->{r["final_verdict"]}'] += 1
+for cid, dist in by.items():
+    print(cid, dict(dist))
 PY
 ```
+
+The first five lines reproduce the `RESULTS.md` headline table exactly: **430 usable, 0
+degraded · 300 → 0 · 130 → 130 · 79 refused.** Point `CANONICAL` at
+`sweep_highN_d19.jsonl` instead and the last figure becomes 77 — see the note above for why.
 
 ## Layer 3 — the measurement tool (re-runnable with the reader's own key)
 
