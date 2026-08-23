@@ -580,12 +580,29 @@ class ConsoleController:
         if accounts:
             op["accounts"] = accounts              # #7 per-role account labels (config-key selection)
 
+        # Bug C: a SPEC-LESS selected target (t.spec_path == "") must NOT pass an empty --spec path.
+        # This does NOT crash: run_external_verify's `_load_spec_file("")` raises, is caught at
+        # external_verify.py:585-590, and returns exit 2 with a graceful "[NOT DATA] could not read
+        # --spec". The cost is that the console can then never VERIFY a spec-less target -- it refuses
+        # instead of running. The target already carries the endpoint + ids in memory (op == t.to_op()),
+        # so SYNTHESIZE a minimal spec from its own endpoint (the same shape spec-less `scan` uses) to
+        # give the engine a valid catalog and let the verify actually run.
+        spec_path = t.spec_path
+        spec_tmp = None
+        if not (spec_path and os.path.isfile(spec_path)):
+            from backend.app.services.endpoint_catalog import spec_from_endpoints
+            synth = spec_from_endpoints([f"{t.method} {t.path_template}"])
+            spec_tmp = tempfile.NamedTemporaryFile("w", suffix=".json", delete=False, encoding="utf-8")
+            json.dump(synth, spec_tmp)
+            spec_tmp.close()
+            spec_path = spec_tmp.name
+
         tmp = tempfile.NamedTemporaryFile("w", suffix=".json", delete=False, encoding="utf-8")
         try:
             json.dump(op, tmp)
             tmp.close()
             kwargs = dict(
-                target=t.base_url, spec_path=t.spec_path, op_path=tmp.name,
+                target=t.base_url, spec_path=spec_path, op_path=tmp.name,
                 config_path=self.config_path, prompt=self.prompt,
                 prompt_secret=self._confirming_secret, echo=self.echo, err=self.echo,
                 auth_spec_path=(t.auth_spec_path or None),
@@ -597,6 +614,11 @@ class ConsoleController:
             summary = {0: "nothing confirmed", 1: "confirmed", 2: "NOT DATA"}.get(code, str(code))
             self.echo(f"  (exit {code}: {summary})")
         finally:
+            if spec_tmp is not None:
+                try:
+                    os.unlink(spec_tmp.name)
+                except OSError:
+                    pass
             try:
                 os.unlink(tmp.name)
             except OSError:
