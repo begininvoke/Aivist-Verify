@@ -128,9 +128,17 @@ class Settings(BaseSettings):
                     "serialized/logged; read at point of use via reveal_secret()."
     )
 
+    # The default is `gemini-2.5-pro` because that is the model the committed
+    # zero-false-positive evidence was measured on (every row of
+    # scripts/measure/results/sweep_highN.jsonl carries model='gemini-2.5-pro').
+    # Shipping a different default would put a first-run user off the evidence base
+    # while the docs still cite it. Any other model remains selectable via
+    # GEMINI_PRO_MODEL / LLM_MODEL — see docs/LLM_PROVIDERS.md for what that costs
+    # you in guarantees (connectivity, not zero-FP). Pro is the more expensive model;
+    # that is a deliberate trade of cost for evidence-backed behavior.
     GEMINI_PRO_MODEL: str = Field(
-        default="gemini-2.5-flash",
-        description="Google Gemini model identifier used for all AI calls (logic-hunt analysis + remediation patches)."
+        default="gemini-2.5-pro",
+        description="Google Gemini model identifier used for all AI calls. Defaults to the model the zero-false-positive evidence was measured on."
     )
 
     # --------------------------------------------------------------------------

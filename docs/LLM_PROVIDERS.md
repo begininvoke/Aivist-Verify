@@ -25,8 +25,31 @@ Unset everything ⇒ Gemini via `GEMINI_API_KEY` / `GEMINI_PRO_MODEL`.
 
 ### 1. Gemini (default)
 The `google-genai` SDK (already a dependency). Uses `GEMINI_API_KEY` / `GEMINI_PRO_MODEL`
-unless overridden by `LLM_API_KEY` / `LLM_MODEL`. This is the byte-identical,
-zero-FP-measured path.
+unless overridden by `LLM_API_KEY` / `LLM_MODEL`. This is the byte-identical path.
+
+**Which model, and what the evidence covers.** `GEMINI_PRO_MODEL` defaults to
+`gemini-2.5-pro`. That default is deliberate: `gemini-2.5-pro` is the **only** model the
+zero-false-positive evidence was measured on — every row of the committed artifact
+`scripts/measure/results/sweep_highN.jsonl` carries `model: "gemini-2.5-pro"`. A first-run
+user therefore lands on the configuration the numbers in `RESULTS.md` describe.
+
+**`gemini-2.5-pro` is the more expensive model.** That cost is the price of the default
+matching the evidence, and we would rather you pay it knowingly than be quietly moved to a
+cheaper model our numbers do not cover. Every other model — `gemini-2.5-flash` included —
+remains fully selectable:
+
+```bash
+GEMINI_PRO_MODEL=gemini-2.5-flash     # cheaper; NOT the measured configuration
+# or, provider-neutral:
+LLM_MODEL=gemini-2.5-flash
+```
+
+What you give up by switching is stated plainly: **connectivity, not a zero-FP guarantee.**
+The seam guarantees the call works and a completion comes back. It does not re-validate the
+zero-false-positive claim on any other model — not another Gemini tier, not another vendor.
+If you run on something else, the engine's deterministic gates still run in full (they read
+HTTP evidence, never the model's text), but the measured false-positive rate is no longer a
+statement about your configuration.
 
 ### 2. OpenAI-compatible (`LLM_PROVIDER=openai`)
 **ONE** implementation covers the whole compatible ecosystem via `LLM_BASE_URL`: OpenAI

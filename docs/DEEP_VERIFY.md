@@ -392,7 +392,7 @@ match is. This is what keeps the X-SAFE trap from re-opening the integrity hole.
 | `AI_DEEP_VERIFY_ENABLED` | `False` | When `False`, `execute_deep_verification` returns a clearly-marked `disabled` result and **never** touches the network. Gates the verifier itself. |
 | `AI_DEEP_VERIFY_SHADOW` | `False` | When `False`, the fuzzer's Phase 7 shadow pass is an immediate no-op. When `True`, the fuzzer calls the verifier read-only after a batch. To get a live Gemini second opinion, **both** this and `AI_DEEP_VERIFY_ENABLED` must be `True`. |
 | `GEMINI_API_KEY` | optional | If unset, AI steps return degraded output (see module). |
-| `GEMINI_PRO_MODEL` | `gemini-2.5-flash` (code default; `.env` may override, e.g. `gemini-2.5-pro`) | Model used for both turns. |
+| `GEMINI_PRO_MODEL` | `gemini-2.5-pro` (code default — the model the zero-FP evidence was measured on; `.env` may override) | Model used for both turns. |
 | `GEMINI_REQUEST_TIMEOUT_SECONDS` | `60` | From `settings`; used by Gemini calls in this module. |
 
 Set in `backend/.env` or override at runtime (as the live-check script does).
