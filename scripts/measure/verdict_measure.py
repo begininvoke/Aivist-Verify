@@ -522,8 +522,17 @@ def main():
     print("=" * 108)
     print("verdict_measure — structured measurement run")
     print("=" * 108)
+    # `planned` is a RUN count, not a call count. Each run is ONE execute_deep_verification,
+    # which issues 1 model call (turn 1) or 2 (turn 1 + turn 2, when a follow-up read-back is
+    # performed — see deep_verifier.py's turn-2 branch). This line used to print the run count
+    # labelled "planned model calls", which under-reported the reader's real spend: on the
+    # committed artifacts 350 of 430 runs took a follow-up, i.e. 780 calls for 430 runs (~1.8x).
+    # Report the run count as a run count, and the call figure as the bound it actually is.
     print(f"model={args.model or settings.GEMINI_PRO_MODEL}  N_safe={n_safe} N_vuln={n_vuln}  "
-          f"seed_policy={args.seed_policy}  planned model calls={planned}")
+          f"seed_policy={args.seed_policy}  planned runs={planned}")
+    print(f"planned model calls={planned}..{planned * 2}  (1 per run, +1 for each run whose "
+          f"turn 1 requests a follow-up; measured ratio on the committed sweeps ~1.8x, "
+          f"so budget ~{round(planned * 1.8)})")
     if args.out:
         print(f"structured artifact -> {args.out}")
 

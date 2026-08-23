@@ -100,10 +100,27 @@ python scripts/measure/verdict_measure.py \
     --n-safe 20 --n-vuln 10 --out scripts/measure/results/sweep_highN.jsonl
 ```
 
-**Call count:** ≈ **430** Gemini calls for the full pass
-(vulnerable_target 7×20 + 7×10 = 210; depot 8×20 + 6×10 = 220). The N=1 sweep is ≈ 28 calls.
-The tool prints the planned count before starting and flags any degraded/truncated run as
-**NOT DATA** (excluded from the claim) rather than silently reporting a smaller N.
+**Run count vs. call count — budget for the second one.** The full pass is **430 runs**
+(vulnerable_target 7×20 + 7×10 = 210; depot 8×20 + 6×10 = 220), and the N=1 sweep is
+**28 runs**. A *run* is not a *call*: each run is one `execute_deep_verification`, which
+issues **one** model call if the model delivers a verdict from the baseline+attack evidence
+alone, and **two** if it requests a follow-up read-back (or the engine gathers one
+deterministically) and then answers in turn 2.
+
+Recounted from the committed artifacts' own `follow_up_performed` column:
+
+| Pass | Runs | of which took a follow-up | **Model calls** |
+|---|---|---|---|
+| Full high-N pass (`sweep_highN.jsonl`) | 430 | 350 | **780** |
+| N=1 sweep (`sweep_n1.jsonl`) | 28 | 23 | **51** |
+
+So budget **≈ 780 calls** for the full pass and **≈ 51** for `--n 1` — roughly **1.8×** the
+run count, not 1×. Worst case is 2× (every run taking a follow-up); a transient 503 can add
+up to two more attempts per call on top (`max_attempts=3`, 503-only retry).
+
+The tool prints the planned run count *and* the derived call range before it starts, and
+flags any degraded/truncated run as **NOT DATA** (excluded from the claim) rather than
+silently reporting a smaller N.
 
 Runtime flags (`AI_DEEP_VERIFY_ENABLED`, `AI_DEEP_VERIFY_OWNER_AUTH`) are set in-process by
 the tool; the committed config defaults stay off/unset.

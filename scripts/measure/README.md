@@ -27,9 +27,13 @@ movement / degraded counts).
 - **Your own Gemini key.** Set `GEMINI_API_KEY` in the environment or `backend/.env`. The
   harness flips `AI_DEEP_VERIFY_ENABLED` / `AI_DEEP_VERIFY_OWNER_AUTH` **in-process only**;
   the committed config defaults stay `False`/unset.
-- **Cost ≈ Σ(N over selected cases) model calls.** The full two-lab case set is **28 cases**,
-  so `--n 1` ≈ **28 calls**, `--n 10` ≈ **280**, etc. The harness prints the planned call
-  count before it starts.
+- **Cost: Σ(N over selected cases) is the RUN count, not the call count.** Each run issues
+  **one** model call, plus **one more** if that run takes a follow-up read-back (turn 2).
+  Measured on the committed sweeps, ~1.8× of runs take a follow-up: the 430-run high-N pass
+  cost **780 calls**, and the 28-run `--n 1` sweep cost **51**. The full two-lab case set is
+  **28 cases**, so budget `--n 1` ≈ **51 calls**, `--n 10` ≈ **510**, etc. — roughly 1.8× N,
+  bounded by 2× N. The harness prints the planned run count and the derived call range
+  before it starts.
 - `mitmproxy` is **not** needed; only the two local targets, booted automatically.
 
 ## Reproduce the measurement

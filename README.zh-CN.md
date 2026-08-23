@@ -238,7 +238,9 @@ python -m pytest depot_target/test_vulns.py -q           # 23 tests
 # which exemption fired, every anchor, a per-row regression check. Small and diffable.
 #   scripts/measure/results/sweep_highN.jsonl
 
-# Layer 3 — regenerate Layer 2 from Layer 1 with YOUR OWN Gemini key (~430 calls).
+# Layer 3 — 用你自己的 Gemini key 从 Layer 1 重新生成 Layer 2。
+# 共 430 次运行，但请按约 780 次模型调用来预算：一次运行是 1 次调用，
+# 若该次运行需要 follow-up 回读则是 2 次。已提交的 430 次运行中有 350 次如此。详见 REPRODUCE.md。
 python scripts/measure/verdict_measure.py \
   --caseset scripts/measure/casesets/vulnerable_target.json \
   --caseset scripts/measure/casesets/depot.json \
