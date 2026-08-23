@@ -1,17 +1,40 @@
 # Real-Target Result Matrix
 
 Live measurement of the Aivist Verify engine against third-party public vulnerable targets.
-Every verdict below is recorded verbatim (raw output files alongside this doc), including
-[REFUTED], [NOT DATA], false positives, and misses. **The engine was not tuned to make any
-target pass.** Runs use the non-interactive `aivist run --config` path (env tokens → structured
+Every verdict below is recorded verbatim, including [REFUTED], [NOT DATA], false positives,
+and misses. **The engine was not tuned to make any target pass.** Runs use the
+non-interactive `aivist run --config` path (env tokens → structured
 JSON); the `tier` field maps to the human verdict badge: `confirmed`→`[CONFIRMED]`,
 `refuted`→`[REFUTED]`, `notdata`→`[NOT DATA]`, and `broken_for_all`→`[INCONCLUSIVE]` (the renderer
 prints the badge as `[INCONCLUSIVE]  <shape> - <METHOD> <path>`; the broken-for-all framing and the
 "human review" wording appear in the body lines beneath it, not in the badge itself). Below, the
 shorthand "[INCONCLUSIVE broken-for-all]" is a DESCRIPTION of that tier, never a quote of CLI output.
 
-Model: `gemini-2.5-pro`. Run dates: 2026-08-12 (UTC) — VAmPI + crAPI community/orders in the first
-session, crAPI `mechanic_report` in a second session the same day (see the session note under TARGET 2).
+### What the archived files next to this doc do and do not contain
+
+The ten `*.txt` files beside this document are the **captured stdout/stderr of
+`aivist run --config`** — i.e. the engine's structured JSON result. Read them and you can
+check, for every run: the baseline and attack **requests** (method, URL, headers, body), the
+**responses** (status code, content length, body), the owner-view and bystander probe
+results, every deterministic anchor (`caller_identity`, `payload_causality`, `state_jump`,
+`negative_assertion`, `owner_view_corroborated`), the `guard_override` channel, the final
+`verdict` and `tier`, and the process exit code. That is the HTTP evidence and the code
+gate's decision, and it is fully checkable.
+
+**They contain no model output and no model identifier.** Grep them for `ai_verdict_raw`,
+`reasoning`, `gemini`, `model`, `prompt` or `llm` and you get zero hits in all ten files —
+the `aivist run --config` renderer emits `verdict`/`tier`, so even the raw-vs-final split
+that the lab benchmark reports is not present here.
+
+**Model attribution — and the basis for it.** These runs were made with
+`gemini-2.5-pro`. That attribution rests on **the operator's own record of how the runs were
+configured, not on anything in the committed captures.** You cannot verify it from the files
+in this directory, and we would rather say so than let the line read as though you could.
+The lab benchmark is different and *is* checkable: every row of
+`scripts/measure/results/sweep_highN.jsonl` carries an explicit `model` field.
+
+Run dates: 2026-08-12 (UTC) — VAmPI + crAPI community/orders in the first session, crAPI
+`mechanic_report` in a second session the same day (see the session note under TARGET 2).
 
 ---
 

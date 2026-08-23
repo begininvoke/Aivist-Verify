@@ -127,6 +127,14 @@ the tool; the committed config defaults stay off/unset.
 
 ## What is deliberately NOT committed
 
-Full verbose per-run transcripts (raw model text, every HTTP body) are noise and stay
-gitignored under `scripts/audit/`. Only the structured artifacts and curated transcripts are
-committed. The evidence is the diffable JSONL, not a wall of prose.
+Full verbose per-run transcripts (the model's parsed `reasoning` field, every HTTP body) are
+noise and stay gitignored under `scripts/audit/`. Only the structured artifacts and curated
+transcripts are committed. The evidence is the diffable JSONL, not a wall of prose.
+
+To be exact about what those gitignored transcripts hold: they log the **parsed
+`reasoning` string** the engine extracted from each completion, not the raw completion. The
+verbatim model JSON is captured in memory (`DeepVerificationResult.turns_raw`) and is never
+written to a file by any committed code path — grep the transcripts for `turns_raw` or for a
+`{"decision"` blob and you get nothing. So **no committed or gitignored file in this repo
+contains a raw model completion.** If you need one, `backend/scripts/deep_verify_live_check.py`
+prints `turns_raw` to stdout on a live run.
